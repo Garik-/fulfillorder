@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <script src="dist/bundle.js"></script>
+    <script>
+      // --- init seaport
+      const { OpenSeaPort, Network } = window
+      const config = {}
+      const DEFAULT_NETWORK = Network.Main
+      const provider = new Web3.providers.HttpProvider('https://mainnet.infura.io')
+
+      const seaport = new OpenSeaPort(provider, {
+          ...config,
+          networkName: config && 'networkName' in config ? config.networkName : DEFAULT_NETWORK
+      })
+      // ---------
+
+      /**
+       * @throws is opensea error
+       * @returns {boolean} true|false
+      **/
+      const fulfillOrder = async ({ tokenId, tokenContract, accountAddress, referrerAddress }) => {
+        const orderParams = {
+          sale: 1, // OrderSide.Sell
+          asset_contract_address: tokenContract, // string
+          token_id: parseInt(tokenId, 10) // number
+        }
+
+        const order = await seaport.api.getOrder(orderParams)
+        if (order) {
+          await seaport.fulfillOrder({ order, accountAddress, referrerAddress })
+          return true
+        }
+        return false
+      }
+
+
+      fulfillOrder({
+        tokenId: 40,
+        tokenContract: '0xfa59928e317a544f1805ad5514175b217ad613c3',
+        accountAddress: '0xF95eaf22047Ac831046658532b7B0D2e6F9c359a',
+        referrerAddress: '0xfeB8A0a07c7aDfC91D820157Dddf836E0C24e2d2',
+      })
+    </script>
+  </body>
+</html>
