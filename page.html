@@ -21,9 +21,28 @@
         referrerAddress: REFERRER_ADDRESS,
       }
 
+      // utils ----
+
+      /**
+       * @returns object provider
+       * @throws Exception
+       * */
+      const getProivder = () => {
+        let provider = null;
+        if (window.ethereum) {
+          provider = window.ethereum
+        } else if (window.web3) {
+          provider = window.web3.currentProvider;
+        } else {
+          throw new Error('No Web3 Provider found')
+        }
+        return provider;
+      }
+
       // --- init seaport
       const config = {}
-      const provider = new Web3.providers.HttpProvider(PROVIDER_URL)
+      // const provider = new Web3.providers.HttpProvider(PROVIDER_URL)
+      const provider = getProivder()
 
       const seaport = new OpenSeaPort(provider, {
           ...config,
