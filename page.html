@@ -4,66 +4,22 @@
   </head>
   <body>
     <script src="dist/bundle.js"></script>
+    <script src="dist/main.js"></script>
     <script>
-      // imports
-      const { OpenSeaPort, Network } = window
-
-      // --- constants
-      const DEFAULT_NETWORK = Network.Main
-      const REFERRER_ADDRESS = '0xfeB8A0a07c7aDfC91D820157Dddf836E0C24e2d2'
-      const PROVIDER_URL = 'https://mainnet.infura.io' // need replase
-
-      // --- fulfill order params for replase
       const fulfillOrderParams = {
         tokenId: 40,
         tokenContract: '0xfa59928e317a544f1805ad5514175b217ad613c3',
         accountAddress: '0xF95eaf22047Ac831046658532b7B0D2e6F9c359a',
-        referrerAddress: REFERRER_ADDRESS,
+        referrerAddress: '0xfeB8A0a07c7aDfC91D820157Dddf836E0C24e2d2',
+        ...parseGetQuery(window.location.search)
       }
 
-      // --- init seaport
-      const config = {}
-      const provider = new Web3.providers.HttpProvider(PROVIDER_URL)
+      console.log(fulfillOrderParams)
 
-      const seaport = new OpenSeaPort(provider, {
-          ...config,
-          networkName: config && 'networkName' in config ? config.networkName : DEFAULT_NETWORK
-      })
-
-      /**
-       * @returns {Promise<{error, success}>}
-      **/
-      const fulfillOrder = async ({ tokenId, tokenContract, accountAddress, referrerAddress }) => {
-        const orderParams = {
-          sale: 1, // OrderSide.Sell
-          asset_contract_address: tokenContract, // string
-          token_id: parseInt(tokenId, 10) // number
-        }
-
-        let result = {
-          error: '',
-          success: false
-        }
-
-        try {
-          const order = await seaport.api.getOrder(orderParams)
-          if (order) {
-            await seaport.fulfillOrder({ order, accountAddress, referrerAddress })
-            result.success = true
-          } else {
-            result.error = 'not found order'
-          }
-        } catch (e) {
-          result.error = e.message
-        }
-
-        return result
+      // проверка на редирект
+      if (!('success' in fulfillOrderParams) && !('error' in fulfillOrderParams)) {
+        fulfillOrder(fulfillOrderParams).then(sendResponse)
       }
-
-      fulfillOrder(fulfillOrderParams).then(({ error, success }) => {
-        window.history.pushState({}, null, `?error=${error}&success=${success}`)
-        console.log({ error, success })
-      })
     </script>
   </body>
 </html>
