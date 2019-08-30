@@ -42,6 +42,38 @@ const getProivder = async () => {
   return provider;
 };
 
+const getAccounts = async () => {
+  let accounts = [];
+  if (window.ethereum) {
+    const accountsPromise = new Promise((resolve, reject) => {
+      try {
+        if (window.web3) {
+          const solve = (e, accs) => (e !== null ? reject(e) : resolve(accs));
+          window.web3.eth.getAccounts(solve);
+        } else {
+          throw new Error("You must have web3 to continue");
+        }
+      } catch (err) {
+        reject(err);
+      }
+    });
+    try {
+      window.web3 = new Web3(ethereum); // eslint-disable-line no-undef
+      accounts = await window.ethereum.enable();
+      accounts = !accounts ? await accountsPromise() : accounts;
+      return accounts;
+    } catch (err) {
+      throw new Error("requestAccess error");
+    }
+  } else if (window.web3) {
+    window.web3 = new Web3(web3.currentProvider); // eslint-disable-line no-undef
+    accounts = window.web3.eth.accounts; // eslint-disable-line no-undef
+    return accounts;
+  } else {
+    throw new Error("No Web3 Provider found");
+  }
+};
+
 // --- init seaport
 const config = {};
 // const provider = new Web3.providers.HttpProvider(PROVIDER_URL);
@@ -52,7 +84,7 @@ const config = {};
 const fulfillOrder = async ({
   tokenId,
   tokenContract,
-  accountAddress,
+  // accountAddress,
   referrerAddress
 }) => {
   const orderParams = {
@@ -83,9 +115,14 @@ const fulfillOrder = async ({
       window.seaport = seaport;
     }
 
+    const accounts = await getAccounts();
     const order = await seaport.api.getOrder(orderParams);
     if (order) {
-      await seaport.fulfillOrder({ order, accountAddress, referrerAddress });
+      await seaport.fulfillOrder({
+        order,
+        accountAddress: accounts[0],
+        referrerAddress
+      });
       result.success = true;
     } else {
       result.error = "not found order";
