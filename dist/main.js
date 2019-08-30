@@ -28,20 +28,23 @@ function parseGetQuery(queryString) {
 const getProivder = async () => {
   let provider = null;
   if (window.ethereum) {
-    await window.ethereum.enable()
-    provider = window.ethereum
+    provider = window.ethereum;
+    try {
+      await window.ethereum.enable();
+    } catch (error) {
+      throw new Error("User Rejected");
+    }
   } else if (window.web3) {
     provider = window.web3.currentProvider;
   } else {
-    throw new Error('No Web3 Provider found')
+    throw new Error("No Web3 Provider found");
   }
   return provider;
-}
+};
 
 // --- init seaport
 const config = {};
 // const provider = new Web3.providers.HttpProvider(PROVIDER_URL);
-
 
 /**
  * @returns {Promise<{error, success}>}
@@ -67,15 +70,17 @@ const fulfillOrder = async ({
     let { seaport } = window;
 
     if (!seaport) {
-      const provider = await getProivder()
+      const provider = await getProivder();
 
       seaport = new OpenSeaPort(provider, {
         ...config,
         networkName:
-          config && "networkName" in config ? config.networkName : DEFAULT_NETWORK
+          config && "networkName" in config
+            ? config.networkName
+            : DEFAULT_NETWORK
       });
 
-      window.seaport = seaport
+      window.seaport = seaport;
     }
 
     const order = await seaport.api.getOrder(orderParams);
