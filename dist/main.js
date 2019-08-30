@@ -21,15 +21,27 @@ function parseGetQuery(queryString) {
   return query;
 }
 
+/**
+ * @returns object provider
+ * @throws Exception
+ * */
+const getProivder = async () => {
+  let provider = null;
+  if (window.ethereum) {
+    await window.ethereum.enable()
+    provider = window.ethereum
+  } else if (window.web3) {
+    provider = window.web3.currentProvider;
+  } else {
+    throw new Error('No Web3 Provider found')
+  }
+  return provider;
+}
+
 // --- init seaport
 const config = {};
-const provider = new Web3.providers.HttpProvider(PROVIDER_URL);
+// const provider = new Web3.providers.HttpProvider(PROVIDER_URL);
 
-window.seaport = new OpenSeaPort(provider, {
-  ...config,
-  networkName:
-    config && "networkName" in config ? config.networkName : DEFAULT_NETWORK
-});
 
 /**
  * @returns {Promise<{error, success}>}
@@ -52,7 +64,20 @@ const fulfillOrder = async ({
   };
 
   try {
-    const { seaport } = window;
+    let { seaport } = window;
+
+    if (!seaport) {
+      const provider = await getProivder()
+
+      seaport = new OpenSeaPort(provider, {
+        ...config,
+        networkName:
+          config && "networkName" in config ? config.networkName : DEFAULT_NETWORK
+      });
+
+      window.seaport = seaport
+    }
+
     const order = await seaport.api.getOrder(orderParams);
     if (order) {
       await seaport.fulfillOrder({ order, accountAddress, referrerAddress });
